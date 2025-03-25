@@ -1,0 +1,51 @@
+modules = ["lua"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Run Lua Script"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "lua-script-review"
+
+[[workflows.workflow]]
+name = "Run Lua Script"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "lua BlueLocksRivals.lua"
+
+[[workflows.workflow]]
+name = "lua-script-review"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cat BlueLocksRivals.lua"
+
+[deployment]
+run = ["sh", "-c", "lua BlueLocksRivals.lua"]
