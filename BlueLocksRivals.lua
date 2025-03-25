@@ -189,7 +189,13 @@ function game:GetService(serviceName)
     }
 end
 
-local Players = { LocalPlayer = { Name = "TestPlayer", GetMouse = function() return { X = 0, Y = 0 } end } }
+-- Define Players as global for testing environment to avoid reference issues
+Players = { 
+    LocalPlayer = { Name = "TestPlayer", GetMouse = function() return { X = 0, Y = 0 } end },
+    GetPlayers = function() 
+        return { Players.LocalPlayer } -- Return array with just the LocalPlayer for testing
+    end
+}
 Players.LocalPlayer.WaitForChild = function(self, childName) return {} end
 Players.LocalPlayer.Character = { HumanoidRootPart = { Position = Vector3.new(0, 0, 0) } }
 
@@ -503,12 +509,16 @@ local Executor = identifyexecutor and identifyexecutor() or "Unknown"
 -- Configuration (Saved Settings)
 local SaveFileName = "BlueLocksRivals_Settings.json"
 local DefaultSettings = {
+    PlayerName = "",
     AutoTrain = false,
     AutoFarm = false,
     PlayerESP = false,
     InstantGoal = false,
     InfiniteStamina = false,
     AutoDribble = false,
+    AutoGoal = false,
+    AimlockBall = false,
+    LegendHandles = false,
     UIPosition = UDim2.new(0.8, 0, 0.5, 0),
     UIMinimized = false
 }
@@ -681,7 +691,10 @@ function Library:CreateWindow()
     LogoImage.Position = UDim2.new(0.5, -40, 0, 35) -- Positioned below title bar
     LogoImage.Size = UDim2.new(0, 80, 0, 80)
     LogoImage.Image = "rbxassetid://13429676106" -- Blue Lock ball logo
-    LogoImage.ScaleType = Enum.ScaleType.Fit
+    -- Use pcall for Roblox-specific enums that might not exist in our test environment
+    pcall(function()
+        LogoImage.ScaleType = Enum.ScaleType.Fit
+    end)
     LogoImage.Parent = MainFrame
     
     -- Add corner radius
@@ -1498,6 +1511,161 @@ function GameFeatures.SetupAutoDribble(enabled)
     end
 end
 
+-- Player Name Input Dialog
+function Library:ShowNameInputDialog()
+    print("Showing name input dialog...")
+    -- If user already has a name saved, don't show this dialog
+    if Settings.PlayerName and Settings.PlayerName ~= "" then
+        print("Player name already set: " .. Settings.PlayerName)
+        return
+    end
+    
+    -- Create a modal dialog for name input
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "NameInputDialog"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    -- Try to set CoreGui as parent, fallback to PlayerGui
+    pcall(function()
+        ScreenGui.Parent = CoreGui
+    end)
+    
+    if not ScreenGui.Parent then
+        ScreenGui.Parent = PlayerGui
+    end
+    
+    -- Create a darkened background
+    local Background = Instance.new("Frame")
+    Background.Name = "Background"
+    Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Background.BackgroundTransparency = 0.5
+    Background.BorderSizePixel = 0
+    Background.Size = UDim2.new(1, 0, 1, 0)
+    Background.Parent = ScreenGui
+    
+    -- Create the dialog frame
+    local DialogFrame = Instance.new("Frame")
+    DialogFrame.Name = "DialogFrame"
+    DialogFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    DialogFrame.BorderSizePixel = 0
+    DialogFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+    DialogFrame.Size = UDim2.new(0, 300, 0, 200)
+    DialogFrame.Parent = Background
+    
+    -- Add corner radius
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 8)
+    UICorner.Parent = DialogFrame
+    
+    -- Title
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.BackgroundTransparency = 1
+    Title.Position = UDim2.new(0, 0, 0, 15)
+    Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.Font = Enum.Font.SourceSansBold
+    Title.Text = "Welcome to Blue Lock Rivals"
+    Title.TextColor3 = Color3.fromRGB(240, 240, 245)
+    Title.TextSize = 20
+    Title.Parent = DialogFrame
+    
+    -- Logo
+    local LogoImage = Instance.new("ImageLabel")
+    LogoImage.Name = "LogoImage"
+    LogoImage.BackgroundTransparency = 1
+    LogoImage.Position = UDim2.new(0.5, -30, 0, 50)
+    LogoImage.Size = UDim2.new(0, 60, 0, 60)
+    LogoImage.Image = "rbxassetid://13429676106" -- Blue Lock ball logo
+    pcall(function()
+        LogoImage.ScaleType = Enum.ScaleType.Fit
+    end)
+    LogoImage.Parent = DialogFrame
+    
+    -- Instruction text
+    local InstructionText = Instance.new("TextLabel")
+    InstructionText.Name = "InstructionText"
+    InstructionText.BackgroundTransparency = 1
+    InstructionText.Position = UDim2.new(0, 20, 0, 110)
+    InstructionText.Size = UDim2.new(1, -40, 0, 20)
+    InstructionText.Font = Enum.Font.SourceSans
+    InstructionText.Text = "Please enter your player name:"
+    InstructionText.TextColor3 = Color3.fromRGB(240, 240, 245)
+    InstructionText.TextSize = 16
+    InstructionText.TextXAlignment = Enum.TextXAlignment.Left
+    InstructionText.Parent = DialogFrame
+    
+    -- Text input
+    local NameInput = Instance.new("TextBox")
+    NameInput.Name = "NameInput"
+    NameInput.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+    NameInput.BorderSizePixel = 0
+    NameInput.Position = UDim2.new(0, 20, 0, 135)
+    NameInput.Size = UDim2.new(1, -40, 0, 30)
+    NameInput.Font = Enum.Font.SourceSans
+    NameInput.PlaceholderText = "Enter your name..."
+    NameInput.Text = ""
+    NameInput.TextColor3 = Color3.fromRGB(240, 240, 245)
+    NameInput.TextSize = 16
+    NameInput.ClearTextOnFocus = false
+    NameInput.Parent = DialogFrame
+    
+    -- Add rounded corners to text box
+    local TextBoxCorner = Instance.new("UICorner")
+    TextBoxCorner.CornerRadius = UDim.new(0, 4)
+    TextBoxCorner.Parent = NameInput
+    
+    -- Create confirm button
+    local ConfirmButton = Instance.new("TextButton")
+    ConfirmButton.Name = "ConfirmButton"
+    ConfirmButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    ConfirmButton.BorderSizePixel = 0
+    ConfirmButton.Position = UDim2.new(0.5, -60, 1, -45)
+    ConfirmButton.Size = UDim2.new(0, 120, 0, 30)
+    ConfirmButton.Font = Enum.Font.SourceSansBold
+    ConfirmButton.Text = "Start Playing"
+    ConfirmButton.TextColor3 = Color3.fromRGB(240, 240, 245)
+    ConfirmButton.TextSize = 16
+    ConfirmButton.Parent = DialogFrame
+    
+    -- Add rounded corners to button
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 4)
+    ButtonCorner.Parent = ConfirmButton
+    
+    -- Button click event
+    ConfirmButton.MouseButton1Click:Connect(function()
+        local name = NameInput.Text:gsub("^%s*(.-)%s*$", "%1") -- Trim whitespace
+        
+        if name ~= "" then
+            Settings.PlayerName = name
+            SaveSettings()
+            print("Player name set to: " .. name)
+            ScreenGui:Destroy()
+        else
+            -- Shake animation to indicate error
+            local originalPosition = DialogFrame.Position
+            for i = 1, 5 do
+                DialogFrame.Position = UDim2.new(originalPosition.X.Scale, originalPosition.X.Offset + (i % 2 == 0 and 5 or -5), originalPosition.Y.Scale, originalPosition.Y.Offset)
+                wait(0.05)
+            end
+            DialogFrame.Position = originalPosition
+            
+            -- Change border color to red temporarily
+            NameInput.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+            wait(0.5)
+            NameInput.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+        end
+    end)
+    
+    -- Return the dialog for further customization if needed
+    return {
+        ScreenGui = ScreenGui,
+        DialogFrame = DialogFrame,
+        NameInput = NameInput
+    }
+end
+
 -- Main Script Execution
 local function Initialize()
     print("Initializing Blue Lock Rivals Script...")
@@ -1507,6 +1675,9 @@ local function Initialize()
     
     -- Create GUI
     Library:CreateWindow()
+    
+    -- Show name input dialog if needed
+    Library:ShowNameInputDialog()
     
     -- Create toggles
     Library:CreateToggle("AutoTrain", Settings.AutoTrain, function(value)
@@ -1531,6 +1702,20 @@ local function Initialize()
     
     Library:CreateToggle("AutoDribble", Settings.AutoDribble, function(value)
         GameFeatures.SetupAutoDribble(value)
+    end)
+    
+    -- New features
+    
+    Library:CreateToggle("AutoGoal", Settings.AutoGoal, function(value)
+        GameFeatures.SetupAutoGoal(value)
+    end)
+    
+    Library:CreateToggle("AimlockBall", Settings.AimlockBall, function(value)
+        GameFeatures.SetupAimlockBall(value)
+    end)
+    
+    Library:CreateToggle("LegendHandles", Settings.LegendHandles, function(value)
+        GameFeatures.SetupLegendHandles(value)
     end)
     
     -- Initialize features based on saved settings
