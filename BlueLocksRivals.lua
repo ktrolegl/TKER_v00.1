@@ -670,9 +670,19 @@ function Library:CreateWindow()
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     MainFrame.BorderSizePixel = 0
     MainFrame.Position = Settings.UIPosition or UDim2.new(0.8, 0, 0.5, 0)
-    MainFrame.Size = UDim2.new(0, 250, 0, 300)
+    MainFrame.Size = UDim2.new(0, 250, 0, 350) -- Made slightly taller to accommodate logo
     MainFrame.Active = true
     MainFrame.Parent = ScreenGui
+    
+    -- Add logo/image at the top
+    local LogoImage = Instance.new("ImageLabel")
+    LogoImage.Name = "LogoImage"
+    LogoImage.BackgroundTransparency = 1
+    LogoImage.Position = UDim2.new(0.5, -40, 0, 35) -- Positioned below title bar
+    LogoImage.Size = UDim2.new(0, 80, 0, 80)
+    LogoImage.Image = "rbxassetid://13429676106" -- Blue Lock ball logo
+    LogoImage.ScaleType = Enum.ScaleType.Fit
+    LogoImage.Parent = MainFrame
     
     -- Add corner radius
     local UICorner = Instance.new("UICorner")
