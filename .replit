@@ -31,7 +31,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "lua BlueLocksRivals.lua"
+args = "lua test_script.lua"
 
 [[workflows.workflow]]
 name = "lua-script-review"
@@ -48,4 +48,4 @@ task = "shell.exec"
 args = "cat BlueLocksRivals.lua"
 
 [deployment]
-run = ["sh", "-c", "lua BlueLocksRivals.lua"]
+run = ["sh", "-c", "lua test_script.lua"]

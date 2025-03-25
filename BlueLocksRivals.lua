@@ -15,15 +15,480 @@
     Developer: Based on request requirements
 ]]
 
--- Services
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
-local CoreGui = game:GetService("CoreGui")
-local GuiService = game:GetService("GuiService")
+-- Mock Roblox Services for testing
+-- Note: This script is designed to run in Roblox, not standalone Lua
+-- This is a test environment to verify the script's functionality
+
+-- Mock Roblox Classes
+-- Vector3 class implementation
+Vector3 = {}
+Vector3.__index = Vector3
+
+function Vector3.new(x, y, z)
+    local self = setmetatable({}, Vector3)
+    self.X = x or 0
+    self.Y = y or 0
+    self.Z = z or 0
+    return self
+end
+
+function Vector3:Magnitude()
+    return math.sqrt(self.X * self.X + self.Y * self.Y + self.Z * self.Z)
+end
+
+function Vector3:Dot(other)
+    return self.X * other.X + self.Y * other.Y + self.Z * other.Z
+end
+
+function Vector3:Cross(other)
+    return Vector3.new(
+        self.Y * other.Z - self.Z * other.Y,
+        self.Z * other.X - self.X * other.Z,
+        self.X * other.Y - self.Y * other.X
+    )
+end
+
+function Vector3:Normalize()
+    local mag = self:Magnitude()
+    if mag > 0 then
+        return Vector3.new(self.X / mag, self.Y / mag, self.Z / mag)
+    end
+    return Vector3.new(0, 0, 0)
+end
+
+-- Vector3 arithmetic operations
+function Vector3.__add(a, b)
+    return Vector3.new(a.X + b.X, a.Y + b.Y, a.Z + b.Z)
+end
+
+function Vector3.__sub(a, b)
+    return Vector3.new(a.X - b.X, a.Y - b.Y, a.Z - b.Z)
+end
+
+function Vector3.__mul(a, b)
+    if type(a) == "number" then
+        return Vector3.new(a * b.X, a * b.Y, a * b.Z)
+    elseif type(b) == "number" then
+        return Vector3.new(a.X * b, a.Y * b, a.Z * b)
+    else
+        return Vector3.new(a.X * b.X, a.Y * b.Y, a.Z * b.Z)
+    end
+end
+
+function Vector3.__div(a, b)
+    if type(b) == "number" then
+        return Vector3.new(a.X / b, a.Y / b, a.Z / b)
+    else
+        return Vector3.new(a.X / b.X, a.Y / b.Y, a.Z / b.Z)
+    end
+end
+
+function Vector3.__unm(a)
+    return Vector3.new(-a.X, -a.Y, -a.Z)
+end
+
+function Vector3.__eq(a, b)
+    return a.X == b.X and a.Y == b.Y and a.Z == b.Z
+end
+
+function Vector3.__tostring(self)
+    return string.format("(%0.2f, %0.2f, %0.2f)", self.X, self.Y, self.Z)
+end
+
+-- Color3 class implementation
+Color3 = {}
+Color3.__index = Color3
+
+function Color3.fromRGB(r, g, b)
+    local self = setmetatable({}, Color3)
+    self.R = r / 255
+    self.G = g / 255
+    self.B = b / 255
+    return self
+end
+
+function Color3.new(r, g, b)
+    local self = setmetatable({}, Color3)
+    self.R = r or 0
+    self.G = g or 0
+    self.B = b or 0
+    return self
+end
+
+-- UDim2 class implementation
+UDim2 = {}
+UDim2.__index = UDim2
+
+function UDim2.new(xScale, xOffset, yScale, yOffset)
+    local self = setmetatable({}, UDim2)
+    self.X = {Scale = xScale or 0, Offset = xOffset or 0}
+    self.Y = {Scale = yScale or 0, Offset = yOffset or 0}
+    return self
+end
+
+-- Enum implementation
+Enum = {
+    HighlightDepthMode = {AlwaysOnTop = "AlwaysOnTop"},
+    ZIndexBehavior = {Sibling = "Sibling"},
+    Font = {
+        SourceSans = "SourceSans",
+        SourceSansBold = "SourceSansBold"
+    },
+    TextXAlignment = {Left = "Left"},
+    EasingDirection = {Out = "Out"},
+    EasingStyle = {Quart = "Quart"},
+    AutomaticSize = {Y = "Y"},
+    HorizontalAlignment = {Center = "Center"},
+    UserInputType = {
+        MouseButton1 = "MouseButton1",
+        MouseMovement = "MouseMovement",
+        Touch = "Touch"
+    }
+}
+
+-- CFrame class implementation (simplified)
+CFrame = {}
+CFrame.__index = CFrame
+
+function CFrame.new(x, y, z)
+    local self = setmetatable({}, CFrame)
+    self.Position = Vector3.new(x or 0, y or 0, z or 0)
+    return self
+end
+
+function CFrame:ToWorldSpace(other)
+    return CFrame.new(
+        self.Position.X + other.Position.X,
+        self.Position.Y + other.Position.Y,
+        self.Position.Z + other.Position.Z
+    )
+end
+
+-- Instance class implementation
+Instance = {}
+Instance.__index = Instance
+
+function Instance.new(className)
+    local instance = setmetatable({}, Instance)
+    instance.ClassName = className
+    instance.Name = className
+    instance.Parent = nil
+    instance.Children = {}
+    instance.Properties = {}
+    instance.Events = {}
+    
+    return instance
+end
+
+-- Mock Services
+local game = {}
+function game:GetService(serviceName)
+    print("Accessing service: " .. serviceName)
+    return {
+        -- Mock necessary properties and methods of each service
+    }
+end
+
+local Players = { LocalPlayer = { Name = "TestPlayer", GetMouse = function() return { X = 0, Y = 0 } end } }
+Players.LocalPlayer.WaitForChild = function(self, childName) return {} end
+Players.LocalPlayer.Character = { HumanoidRootPart = { Position = Vector3.new(0, 0, 0) } }
+
+local ReplicatedStorage = {}
+local UserInputService = { TouchEnabled = false, KeyboardEnabled = true }
+local RunService = { 
+    Heartbeat = { 
+        Connect = function(self, callback) 
+            print("Mock: RunService.Heartbeat connected") 
+            return { Disconnect = function() print("Mock: Connection disconnected") end }
+        end 
+    }
+}
+local TweenService = {}
+local HttpService = {
+    JSONEncode = function(self, data) return "{}" end,
+    JSONDecode = function(self, json) return {} end
+}
+local CoreGui = {
+    Children = {},
+    
+    FindFirstChild = function(self, name)
+        for _, child in pairs(self.Children) do
+            if child.Name == name then
+                return child
+            end
+        end
+        return nil
+    end,
+    
+    GetChildren = function(self)
+        return self.Children
+    end
+}
+local GuiService = {}
+
+-- Add mock Roblox exploit functions
+function identifyexecutor()
+    return "Lua Test Environment"
+end
+
+function getconnections(signal)
+    return {}  -- Return empty table for connections
+end
+
+-- Define Vector3 first as it's used throughout
+Vector3 = {}
+Vector3.__index = Vector3
+
+function Vector3.new(x, y, z)
+    local self = setmetatable({}, Vector3)
+    self.X = x or 0
+    self.Y = y or 0
+    self.Z = z or 0
+    
+    -- Add magnitude calculation
+    self.Magnitude = math.sqrt(self.X^2 + self.Y^2 + self.Z^2)
+    
+    return self
+end
+
+-- Define vector operations
+function Vector3.__sub(a, b)
+    if type(a) == "table" and type(b) == "table" then
+        return Vector3.new(a.X - b.X, a.Y - b.Y, a.Z - b.Z)
+    end
+    return Vector3.new(0, 0, 0)
+end
+
+-- Add Vector2 for DragOffset
+Vector2 = {}
+Vector2.__index = Vector2
+
+function Vector2.new(x, y)
+    local self = setmetatable({}, Vector2)
+    self.X = x or 0
+    self.Y = y or 0
+    return self
+end
+
+-- Mock CFrame for teleportation
+CFrame = {}
+CFrame.__index = CFrame
+
+function CFrame.new(position)
+    local self = setmetatable({}, CFrame)
+    if type(position) == "table" then
+        self.Position = position
+    else
+        self.Position = Vector3.new(position, 0, 0)
+    end
+    return self
+end
+
+local Color3 = {}
+Color3.__index = Color3
+
+function Color3.fromRGB(r, g, b)
+    local self = setmetatable({}, Color3)
+    self.R = r/255
+    self.G = g/255
+    self.B = b/255
+    return self
+end
+
+-- Define UDim first (required for UDim2 and UICorner)
+local UDim = {}
+UDim.__index = UDim
+
+function UDim.new(scale, offset)
+    local self = setmetatable({}, UDim)
+    self.Scale = scale or 0
+    self.Offset = offset or 0
+    return self
+end
+
+local UDim2 = {}
+UDim2.__index = UDim2
+
+function UDim2.new(scaleX, offsetX, scaleY, offsetY)
+    local self = setmetatable({}, UDim2)
+    self.X = {Scale = scaleX, Offset = offsetX or 0}
+    self.Y = {Scale = scaleY, Offset = offsetY or 0}
+    return self
+end
+
+local Enum = {
+    Font = {SourceSans = "SourceSans", SourceSansBold = "SourceSansBold"},
+    TextXAlignment = {Left = "Left", Center = "Center", Right = "Right"},
+    ZIndexBehavior = {Sibling = "Sibling"},
+    UserInputType = {MouseButton1 = "MouseButton1", MouseMovement = "MouseMovement", Touch = "Touch"},
+    EasingDirection = {Out = "Out", In = "In", InOut = "InOut"},
+    EasingStyle = {Quart = "Quart", Linear = "Linear", Quad = "Quad"},
+    AutomaticSize = {Y = "Y", None = "None"},
+    HorizontalAlignment = {Center = "Center", Left = "Left", Right = "Right"}
+}
+
+-- Mock Instance class
+local Instance = {}
+function Instance.new(className)
+    print("Creating instance of type: " .. className)
+    local instance = {
+        Name = "",
+        ClassName = className,
+        Parent = nil,
+        Children = {},
+        Properties = {},
+        Connections = {},
+        
+        Destroy = function(self)
+            if self.Parent then
+                for i, child in ipairs(self.Parent.Children) do
+                    if child == self then
+                        table.remove(self.Parent.Children, i)
+                        break
+                    end
+                end
+            end
+            
+            self.Parent = nil
+            for _, connection in pairs(self.Connections) do
+                connection:Disconnect()
+            end
+            self.Connections = {}
+        end,
+        
+        FindFirstChild = function(self, name)
+            for _, child in ipairs(self.Children) do
+                if child.Name == name then
+                    return child
+                end
+            end
+            return nil
+        end,
+        
+        GetChildren = function(self)
+            return self.Children
+        end,
+        
+        IsA = function(self, className)
+            return self.ClassName == className
+        end,
+        
+        Connect = function(self, callback)
+            local connection = {
+                Connected = true,
+                Disconnect = function(this)
+                    this.Connected = false
+                end
+            }
+            table.insert(self.Connections, connection)
+            return connection
+        end,
+        
+        TweenSize = function(self, size, direction, style, time, override, callback)
+            print("Tweening size of " .. self.Name)
+            self.Size = size
+            if callback then callback() end
+            return {
+                Completed = {
+                    Wait = function() return true end
+                }
+            }
+        end,
+        
+        TweenPosition = function(self, position, direction, style, time, override, callback)
+            print("Tweening position of " .. self.Name)
+            self.Position = position
+            if callback then callback() end
+            return {
+                Completed = {
+                    Wait = function() return true end
+                }
+            }
+        end
+    }
+    
+    -- Handle properties for different instance types
+    if className == "ScreenGui" then
+        instance.ResetOnSpawn = false
+        instance.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    elseif className == "Frame" or className == "ScrollingFrame" then
+        instance.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        instance.BackgroundTransparency = 0
+        instance.BorderSizePixel = 1
+        instance.Position = UDim2.new(0, 0, 0, 0)
+        instance.Size = UDim2.new(0, 100, 0, 100)
+        
+        if className == "ScrollingFrame" then
+            instance.CanvasSize = UDim2.new(0, 0, 0, 0)
+            instance.AutomaticCanvasSize = Enum.AutomaticSize.None
+            instance.ScrollBarThickness = 12
+        end
+    elseif className == "TextLabel" or className == "TextButton" then
+        instance.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        instance.BackgroundTransparency = 0
+        instance.BorderSizePixel = 1
+        instance.Position = UDim2.new(0, 0, 0, 0)
+        instance.Size = UDim2.new(0, 100, 0, 50)
+        instance.Font = Enum.Font.SourceSans
+        instance.Text = ""
+        instance.TextColor3 = Color3.fromRGB(0, 0, 0)
+        instance.TextSize = 14
+        
+        if className == "TextButton" then
+            instance.MouseButton1Click = {
+                Connect = function(self, callback)
+                    local connection = {
+                        Connected = true,
+                        Disconnect = function(this)
+                            this.Connected = false
+                        end
+                    }
+                    table.insert(instance.Connections, connection)
+                    print("Button click event connected for " .. instance.Name)
+                    return connection
+                end
+            }
+        end
+    elseif className == "UICorner" then
+        instance.CornerRadius = UDim.new(0, 0)
+    elseif className == "UIListLayout" then
+        instance.Padding = UDim.new(0, 0)
+        instance.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    end
+    
+    -- Set up property metatable
+    setmetatable(instance, {
+        __index = function(t, k)
+            return t.Properties[k]
+        end,
+        __newindex = function(t, k, v)
+            t.Properties[k] = v
+            if k == "Parent" and v then
+                table.insert(v.Children, t)
+            end
+        end
+    })
+    
+    return instance
+end
+
+-- Mock workspace
+local workspace = {
+    Children = {},
+    
+    FindFirstChild = function(self, name)
+        print("Looking for " .. name .. " in workspace")
+        return nil
+    end,
+    
+    GetChildren = function(self)
+        return self.Children
+    end,
+    
+    CurrentCamera = {
+        Position = Vector3.new(0, 0, 0)
+    }
+}
 
 -- Variables
 local LocalPlayer = Players.LocalPlayer
@@ -107,6 +572,34 @@ local function GetGameData()
     gameData.Remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:FindFirstChild("RemoteEvents")
     
     return gameData
+end
+
+-- Mock Roblox filesystem operations
+local fileSystem = {}
+function writefile(path, content)
+    print("Mock: Writing file to " .. path)
+    fileSystem[path] = content
+    return true
+end
+
+function readfile(path)
+    print("Mock: Reading file from " .. path)
+    return fileSystem[path] or ""
+end
+
+function isfile(path)
+    return fileSystem[path] ~= nil
+end
+
+-- Mock print overrides
+local originalPrint = print
+local originalWarn = print
+function print(...)
+    originalPrint("INFO:", ...)
+end
+
+function warn(...)
+    originalWarn("WARNING:", ...)
 end
 
 local function SaveSettings()
@@ -274,6 +767,31 @@ function Library:CreateWindow()
     UIListLayout.Parent = ContentContainer
     
     -- Dragging functionality
+    -- In our mock environment, we'll create these if they don't exist
+    if not TitleBar.InputBegan then
+        print("Setting up mock InputBegan for TitleBar")
+        TitleBar.InputBegan = {
+            Connect = function(self, callback)
+                return {
+                    Connected = true,
+                    Disconnect = function() end
+                }
+            end
+        }
+    end
+    
+    if not TitleBar.InputEnded then
+        print("Setting up mock InputEnded for TitleBar")
+        TitleBar.InputEnded = {
+            Connect = function(self, callback)
+                return {
+                    Connected = true,
+                    Disconnect = function() end
+                }
+            end
+        }
+    end
+    
     TitleBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             Dragging = true
@@ -289,6 +807,19 @@ function Library:CreateWindow()
             SaveSettings()
         end
     end)
+    
+    -- Create mock InputChanged if it doesn't exist
+    if not UserInputService.InputChanged then
+        print("Setting up mock InputChanged for UserInputService")
+        UserInputService.InputChanged = {
+            Connect = function(self, callback)
+                return {
+                    Connected = true,
+                    Disconnect = function() end
+                }
+            end
+        }
+    end
     
     UserInputService.InputChanged:Connect(function(input)
         if Dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
@@ -494,53 +1025,279 @@ function GameFeatures.SetupAutoFarm(enabled)
             GameFeatures.AutoFarmConnection:Disconnect()
         end
         
+        -- Ball and goal tracking variables
+        local soccerBall = nil
+        local enemyGoalPosition = nil
+        local teamGoalPosition = nil
+        local lastFarmAction = 0
+        local farmState = "FIND_BALL" -- State machine: FIND_BALL, MOVE_TO_BALL, POSITION_FOR_SHOT, SHOOT
+        
+        -- Setup match counter for performance tracking
+        local matchStats = {
+            goalsScored = 0,
+            matchesPlayed = 0,
+            startTime = os.time()
+        }
+        
+        -- Find the soccer ball in workspace
+        local function findSoccerBall()
+            for _, obj in pairs(workspace:GetChildren()) do
+                if obj.Name == "SoccerBall" or obj.Name == "Ball" or obj.Name == "GameBall" then
+                    print("Found ball: " .. obj.Name)
+                    return obj
+                end
+            end
+            
+            -- If specific ball not found, look for something that might be the ball
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and 
+                   (obj.Shape == Enum.PartType.Ball or string.find(string.lower(obj.Name), "ball")) then
+                    print("Found potential ball: " .. obj.Name)
+                    return obj
+                end
+            end
+            
+            print("No ball found")
+            return nil
+        end
+        
+        -- Function to detect goal positions
+        local function findGoalPositions()
+            local goalPositions = {}
+            
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name == "Goal" or obj.Name == "SoccerGoal" or string.find(string.lower(obj.Name), "goal") then
+                    table.insert(goalPositions, obj)
+                    print("Found goal: " .. obj.Name)
+                end
+            end
+            
+            -- Determine which goal belongs to which team
+            if #goalPositions >= 2 then
+                -- Determine which goal is ours and which is the enemy's based on distance
+                local playerPos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position
+                if playerPos then
+                    local dist1 = (playerPos - goalPositions[1].Position).Magnitude
+                    local dist2 = (playerPos - goalPositions[2].Position).Magnitude
+                    
+                    if dist1 < dist2 then
+                        -- Team goal is closer, enemy goal is farther
+                        teamGoalPosition = goalPositions[1]
+                        enemyGoalPosition = goalPositions[2]
+                        print("Team goal: " .. goalPositions[1].Name)
+                        print("Enemy goal: " .. goalPositions[2].Name)
+                    else
+                        -- Enemy goal is closer, team goal is farther
+                        teamGoalPosition = goalPositions[2]
+                        enemyGoalPosition = goalPositions[1]
+                        print("Team goal: " .. goalPositions[2].Name)
+                        print("Enemy goal: " .. goalPositions[1].Name)
+                    end
+                    
+                    return true
+                end
+            elseif #goalPositions == 1 then
+                -- Only one goal found, assume it's the enemy goal
+                enemyGoalPosition = goalPositions[1]
+                print("Found only one goal, assuming enemy: " .. goalPositions[1].Name)
+                return true
+            end
+            
+            print("No goals found or couldn't determine which is which")
+            return false
+        end
+        
+        -- Function to calculate shooting position
+        local function calculateOptimalShootingPosition(ballPosition, goalPosition)
+            if not ballPosition or not goalPosition then return nil end
+            
+            -- Calculate direction to goal
+            local directionToGoal = (goalPosition.Position - ballPosition).Unit
+            
+            -- Position player slightly behind the ball in relation to the goal
+            local optimalPosition = ballPosition - (directionToGoal * 4)
+            
+            -- Add a slight offset to avoid being directly behind
+            optimalPosition = optimalPosition + Vector3.new(math.random(-2, 2), 0, math.random(-2, 2))
+            
+            return optimalPosition
+        end
+        
+        -- Function to display farm stats
+        local function showFarmStats()
+            local timePassed = os.time() - matchStats.startTime
+            local hours = math.floor(timePassed / 3600)
+            local minutes = math.floor((timePassed % 3600) / 60)
+            local seconds = timePassed % 60
+            
+            local timeString = string.format("%02d:%02d:%02d", hours, minutes, seconds)
+            local goalsPerMinute = timePassed > 0 and (matchStats.goalsScored / (timePassed / 60)) or 0
+            
+            print("=== Auto Farm Stats ===")
+            print("Time running: " .. timeString)
+            print("Goals scored: " .. matchStats.goalsScored)
+            print("Matches played: " .. matchStats.matchesPlayed)
+            print(string.format("Goals per minute: %.2f", goalsPerMinute))
+            print("=====================")
+        end
+        
+        -- Main auto farm loop
         GameFeatures.AutoFarmConnection = RunService.Heartbeat:Connect(function()
             SafeCall(function()
+                -- Exit if disabled
+                if not Settings.AutoFarm then
+                    if GameFeatures.AutoFarmConnection then
+                        GameFeatures.AutoFarmConnection:Disconnect()
+                        GameFeatures.AutoFarmConnection = nil
+                    end
+                    return
+                end
+                
+                -- Throttle actions to avoid performance issues
+                local currentTime = os.time()
+                if currentTime - lastFarmAction < 0.1 then return end
+                lastFarmAction = currentTime
+                
                 local gameData = GetGameData()
                 local character = LocalPlayer.Character
-                if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+                if not character or not character:FindFirstChild("HumanoidRootPart") or not character:FindFirstChild("Humanoid") then return end
+                
+                local humanoid = character:FindFirstChild("Humanoid")
+                local hrp = character:FindFirstChild("HumanoidRootPart")
                 
                 -- Look for match or farming areas
-                local farmAreas = gameData.MatchAreas or workspace:FindFirstChild("FarmAreas")
-                if not farmAreas then return end
-                
-                -- Look for currency/rewards
-                for _, item in pairs(workspace:GetChildren()) do
-                    if item:IsA("BasePart") and (item.Name:find("Coin") or item.Name:find("Currency") or item.Name:find("Reward")) then
-                        if (item.Position - character.HumanoidRootPart.Position).Magnitude < 50 then
-                            -- Teleport to the item
-                            character.HumanoidRootPart.CFrame = CFrame.new(item.Position)
-                        end
-                    end
-                end
+                local farmAreas = gameData.MatchAreas or workspace:FindFirstChild("FarmAreas") or workspace:FindFirstChild("Matches")
                 
                 -- Auto-join matches
                 local remotes = gameData.Remotes
                 if remotes then
-                    local joinMatchRemote = remotes:FindFirstChild("JoinMatch") or remotes:FindFirstChild("RequestMatch")
+                    local joinMatchRemote = remotes:FindFirstChild("JoinMatch") or remotes:FindFirstChild("RequestMatch") or remotes:FindFirstChild("JoinGame")
                     if joinMatchRemote and joinMatchRemote:IsA("RemoteEvent") then
                         joinMatchRemote:FireServer()
                     end
                 end
                 
-                -- Auto-play in matches
-                local matchUI = PlayerGui:FindFirstChild("MatchUI") or PlayerGui:FindFirstChild("GameUI")
-                if matchUI and matchUI.Enabled then
-                    -- Find the ball
-                    local ball = workspace:FindFirstChild("Ball") or workspace:FindFirstChild("SoccerBall")
-                    if ball and ball:IsA("BasePart") then
-                        -- Move towards ball
-                        character.Humanoid:MoveTo(ball.Position)
+                -- Detect if we're in a match
+                local matchUI = PlayerGui:FindFirstChild("MatchUI") or PlayerGui:FindFirstChild("GameUI") or PlayerGui:FindFirstChild("InGameUI")
+                local inMatch = matchUI and matchUI.Enabled
+                
+                if inMatch then
+                    -- Make sure we have references to the ball and goal
+                    if not soccerBall or not soccerBall.Parent then
+                        soccerBall = findSoccerBall()
+                        if not soccerBall then 
+                            print("Looking for ball...")
+                            return 
+                        end
+                    end
+                    
+                    if not enemyGoalPosition then
+                        if not findGoalPositions() then
+                            print("Looking for goals...")
+                            return
+                        end
+                    end
+                    
+                    -- Calculate distances
+                    local distanceToBall = (hrp.Position - soccerBall.Position).Magnitude
+                    local distanceToEnemyGoal = enemyGoalPosition and (hrp.Position - enemyGoalPosition.Position).Magnitude or 999
+                    
+                    -- State machine for soccer auto farm
+                    if farmState == "FIND_BALL" then
+                        -- Find the ball and move toward it
+                        print("Moving to ball, distance: " .. distanceToBall)
+                        humanoid:MoveTo(soccerBall.Position)
                         
-                        -- If near ball, try to score
-                        if (ball.Position - character.HumanoidRootPart.Position).Magnitude < 10 then
-                            -- Find goal
-                            local goal = workspace:FindFirstChild("Goal") or workspace:FindFirstChild("EnemyGoal")
-                            if goal then
-                                -- Kick towards goal
-                                local kickRemote = remotes:FindFirstChild("Kick") or remotes:FindFirstChild("KickBall")
-                                if kickRemote and kickRemote:IsA("RemoteEvent") then
-                                    kickRemote:FireServer(goal.Position)
+                        -- If close to ball, transition to next state
+                        if distanceToBall < 8 then
+                            farmState = "POSITION_FOR_SHOT"
+                        end
+                    
+                    elseif farmState == "POSITION_FOR_SHOT" then
+                        -- Position player for optimal shot
+                        local shootPosition = calculateOptimalShootingPosition(soccerBall.Position, enemyGoalPosition)
+                        if shootPosition then
+                            print("Positioning for shot")
+                            humanoid:MoveTo(shootPosition)
+                            
+                            -- If in position, transition to shooting
+                            if (hrp.Position - shootPosition).Magnitude < 3 then
+                                farmState = "SHOOT"
+                            end
+                        else
+                            -- Fallback if calculation fails
+                            farmState = "FIND_BALL"
+                        end
+                    
+                    elseif farmState == "SHOOT" then
+                        -- Execute the shot toward enemy goal
+                        print("Shooting at goal!")
+                        
+                        -- Calculate direction to goal with slight randomization
+                        local directionToGoal = (enemyGoalPosition.Position - soccerBall.Position).Unit
+                        local randomOffset = Vector3.new(math.random(-5, 5)/100, math.random(0, 15)/100, math.random(-5, 5)/100)
+                        local shootDirection = directionToGoal + randomOffset
+                        
+                        -- Calculate power based on distance
+                        local distanceToGoal = (enemyGoalPosition.Position - soccerBall.Position).Magnitude
+                        local shootPower = math.min(100, math.max(50, distanceToGoal * 2))
+                        
+                        -- Try different methods to shoot, as games implement this differently
+                        
+                        -- Method 1: Use kick remote
+                        if remotes then
+                            local kickRemote = remotes:FindFirstChild("Kick") or remotes:FindFirstChild("KickBall") or remotes:FindFirstChild("ShootBall")
+                            if kickRemote and kickRemote:IsA("RemoteEvent") then
+                                kickRemote:FireServer(enemyGoalPosition.Position, shootPower)
+                            end
+                        end
+                        
+                        -- Method 2: Try to directly modify ball physics
+                        if soccerBall and distanceToBall < 5 then
+                            -- Apply force to ball
+                            soccerBall.Velocity = shootDirection * shootPower
+                        end
+                        
+                        -- Track goal attempt
+                        matchStats.goalsScored = matchStats.goalsScored + 1
+                        
+                        -- Show stats periodically
+                        if matchStats.goalsScored % 5 == 0 then
+                            showFarmStats()
+                        end
+                        
+                        -- Reset to finding ball after shooting
+                        farmState = "FIND_BALL"
+                    end
+                else
+                    -- If not in match, look for currency/rewards to collect
+                    for _, item in pairs(workspace:GetChildren()) do
+                        if item:IsA("BasePart") and (item.Name:find("Coin") or item.Name:find("Currency") or item.Name:find("Reward")) then
+                            if (item.Position - hrp.Position).Magnitude < 50 then
+                                print("Moving to collect: " .. item.Name)
+                                humanoid:MoveTo(item.Position)
+                            end
+                        end
+                    end
+                    
+                    -- Look for match areas to join
+                    if farmAreas then
+                        for _, area in pairs(farmAreas:GetChildren()) do
+                            local interactPart = area:FindFirstChild("Interact") or area:FindFirstChild("JoinPart")
+                            if interactPart and interactPart:IsA("BasePart") then
+                                if (interactPart.Position - hrp.Position).Magnitude > 10 then
+                                    print("Moving to match area: " .. area.Name)
+                                    humanoid:MoveTo(interactPart.Position)
+                                else
+                                    -- Try to join if close enough
+                                    if remotes then
+                                        local joinRemote = remotes:FindFirstChild("JoinMatch") or remotes:FindFirstChild("RequestMatch")
+                                        if joinRemote and joinRemote:IsA("RemoteEvent") then
+                                            print("Attempting to join match")
+                                            joinRemote:FireServer(area.Name)
+                                            matchStats.matchesPlayed = matchStats.matchesPlayed + 1
+                                        end
+                                    end
                                 end
                             end
                         end

@@ -1,0 +1,13 @@
+# Replit specific files
+.replit
+replit.nix
+
+# Lua specific
+*.lua~
+
+# Common system files
+.DS_Store
+Thumbs.db
+
+# Generated files
+*.log
