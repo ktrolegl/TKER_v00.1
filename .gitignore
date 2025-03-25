@@ -1,0 +1,30 @@
+# Lua compiled files
+*.o
+*.so
+*.a
+luac.out
+
+# Roblox specific
+RobloxStudioBeta.exe
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# Editor files
+.vs/
+.vscode/
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Replit files
+.replit
+replit.nix

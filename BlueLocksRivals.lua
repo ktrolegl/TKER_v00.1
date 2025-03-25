@@ -1948,41 +1948,52 @@ local function Initialize()
     IsMobile = true
     print("Mobile mode activated for Blue Lock Rivals")
     
-    -- Adjust UI for mobile
+    -- Adjust UI for mobile if Library.Gui exists
     SafeCall(function()
+        -- Reference to the GUI
+        local mainGui = Library.Gui
+        if not mainGui then
+            print("GUI not available for mobile adjustments")
+            return
+        end
+        
         -- Increase button sizes for easier touch interaction
-        for _, ui in pairs(Gui:GetDescendants()) do
-            if ui:IsA("TextButton") then
-                -- Make buttons bigger and add touch feedback
-                ui.Size = UDim2.new(ui.Size.X.Scale, ui.Size.X.Offset * 1.2, ui.Size.Y.Scale, ui.Size.Y.Offset * 1.2)
+        for _, ui in pairs(mainGui:GetDescendants()) do
+            pcall(function()
+                if ui:IsA("TextButton") then
+                    -- Make buttons bigger and add touch feedback
+                    ui.Size = UDim2.new(ui.Size.X.Scale, ui.Size.X.Offset * 1.2, ui.Size.Y.Scale, ui.Size.Y.Offset * 1.2)
+                    
+                    -- Add touch feedback
+                    local originalColor = ui.BackgroundColor3
+                    ui.MouseButton1Down:Connect(function()
+                        ui.BackgroundColor3 = Color3.fromRGB(
+                            math.floor(originalColor.R * 255 * 0.8) / 255,
+                            math.floor(originalColor.G * 255 * 0.8) / 255, 
+                            math.floor(originalColor.B * 255 * 0.8) / 255
+                        )
+                    end)
+                    
+                    ui.MouseButton1Up:Connect(function()
+                        ui.BackgroundColor3 = originalColor
+                    end)
+                end
                 
-                -- Add touch feedback
-                local originalColor = ui.BackgroundColor3
-                ui.MouseButton1Down:Connect(function()
-                    ui.BackgroundColor3 = Color3.fromRGB(
-                        originalColor.R * 0.8, 
-                        originalColor.G * 0.8, 
-                        originalColor.B * 0.8
-                    )
-                end)
-                
-                ui.MouseButton1Up:Connect(function()
-                    ui.BackgroundColor3 = originalColor
-                end)
-            end
-            
-            -- Make text larger
-            if ui:IsA("TextLabel") or ui:IsA("TextButton") or ui:IsA("TextBox") then
-                ui.TextSize = ui.TextSize * 1.2
-            end
+                -- Make text larger
+                if ui:IsA("TextLabel") or ui:IsA("TextButton") or ui:IsA("TextBox") then
+                    ui.TextSize = ui.TextSize * 1.2
+                end
+            end)
         end
         
         -- Make the whole UI a bit larger
-        local mainFrame = Gui:FindFirstChild("MainFrame")
+        local mainFrame = mainGui:FindFirstChild("MainFrame")
         if mainFrame then
             -- Position more toward the center-bottom for easier thumb access
             mainFrame.Position = UDim2.new(0.5, -mainFrame.Size.X.Offset/2, 0.85, -mainFrame.Size.Y.Offset)
         end
+        
+        print("Mobile UI adjustments applied successfully")
     end)
     
     print("Blue Lock Rivals Script Loaded Successfully!")
